@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flappy Bird Game</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to bottom, #a3d9ff, #81f781);
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 20px;
+    }
+
+    .game-container {
+      position: relative;
+      width: 360px;
+      height: 600px;
+      margin: 20px auto;
+      background-image: url('https://i.postimg.cc/300G0R8R/background.webp');
+      background-size: cover;
+      overflow: hidden;
+      border: 10px ridge #5e4ae3;
+      border-radius: 10px;
+    }
+
+    #bird {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background-image: url('https://i.postimg.cc/qgWyV8wC/pngwing-com.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      top: 250px;
+      left: 60px;
+      z-index: 2;
+    }
+
+    .pipe {
+      position: absolute;
+      width: 60px;
+      background-image: url('https://i.postimg.cc/LhJLbytp/pipe.webp');
+      background-size: cover;
+    }
+
+    .pipe.top {
+      top: 0;
+      transform: rotate(180deg);
+    }
+
+    .pipe.bottom {
+      bottom: 0;
+    }
+
+    #score {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #ffffff;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+      background-color: rgba(0, 0, 0, 0.4);
+      padding: 6px 12px;
+      border-radius: 8px;
+    }
+
+    #message {
+      margin-top: 20px;
+      font-size: 24px;
+      color: #fff;
+      background: #333;
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 8px;
+      animation: fadeInOut 2s infinite;
+    }
+
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
+    }
+
+    #game-over {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 10;
+    }
+
+    #play-online {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #222;
+      color: #fff;
+      padding: 10px 16px;
+      text-decoration: none;
+      font-size: 14px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: background 0.3s;
+      z-index: 999;
+    }
+
+    #play-online:hover {
+      background: #444;
+    }
+  </style>
+</head>
+<body>
+  <h1>Flappy Bird 🐤</h1>
+  <div class="game-container">
+    <div id="bird"></div>
+    <div id="score">0</div>
+  </div>
+  <div id="message">Start the Game</div>
+  <div id="game-over">
+    <h2>Game Over!</h2>
+    <p>Your Score: <span id="final-score"></span></p>
+    <button onclick="retryGame()">Retry</button>
+  </div>
+  <a href="https://yourusername.github.io/flappy-bird/" target="_blank" id="play-online">
+    🎮 Play This Game Online
+  </a>
+
+  <script>
+    const bird = document.getElementById("bird");
+    const container = document.querySelector(".game-container");
+    const scoreEl = document.getElementById("score");
+    const message = document.getElementById("message");
+    const gameOverDialog = document.getElementById("game-over");
+    const finalScoreEl = document.getElementById("final-score");
+
+    let birdTop = 250;
+    let gravity = 2;
+    let gameStarted = false;
+    let isGameOver = false;
+    let score = 0;
+    let pipes = [];
+    let pipeGenerator;
+
+    function startGame() {
+      if (gameStarted) return;
+      gameStarted = true;
+      message.style.display = "none";
+      birdTop = 250;
+      bird.style.top = birdTop + "px";
+      score = 0;
+      scoreEl.textContent = score;
+      pipes.forEach(p => p.remove());
+      pipes = [];
+      isGameOver = false;
+      gameOverDialog.style.display = "none";
+
+      gameLoop();
+      pipeGenerator = setInterval(addPipe, 1500);
+    }
+
+    function gameLoop() {
+      if (isGameOver) return;
+
+      birdTop += gravity;
+      if (birdTop < 0 || birdTop + 40 > 600) {
+        endGame();
+        return;
+      }
+
+      bird.style.top = birdTop + "px";
+
+      pipes.forEach(pipe => {
+        const pipeLeft = parseInt(pipe.style.left);
+        pipe.style.left = pipeLeft - 2 + "px";
+
+        if (pipeLeft < -60) {
+          pipe.remove();
+          pipes = pipes.filter(p => p !== pipe);
+          if (pipe.classList.contains("top")) score++;
+        }
+
+        const birdRect = bird.getBoundingClientRect();
+        const pipeRect = pipe.getBoundingClientRect();
+
+        if (
+          birdRect.left < pipeRect.right &&
+          birdRect.right > pipeRect.left &&
+          birdRect.top < pipeRect.bottom &&
+          birdRect.bottom > pipeRect.top
+        ) {
+          endGame();
+        }
+      });
+
+      scoreEl.textContent = score;
+      requestAnimationFrame(gameLoop);
+    }
+
+    function addPipe() {
+      const gap = 150;
+      const minHeight = 50;
+      const maxHeight = 300;
+      const topHeight = Math.floor(Math.random() * (maxHeight - minHeight) + minHeight);
+      const bottomHeight = 600 - gap - topHeight;
+
+      const topPipe = document.createElement("div");
+      topPipe.classList.add("pipe", "top");
+      topPipe.style.height = topHeight + "px";
+      topPipe.style.left = "360px";
+
+      const bottomPipe = document.createElement("div");
+      bottomPipe.classList.add("pipe", "bottom");
+      bottomPipe.style.height = bottomHeight + "px";
+      bottomPipe.style.left = "360px";
+
+      container.appendChild(topPipe);
+      container.appendChild(bottomPipe);
+      pipes.push(topPipe, bottomPipe);
+    }
+
+    function flap() {
+      if (!gameStarted) return startGame();
+      if (isGameOver) return;
+      birdTop -= 40;
+    }
+
+    function endGame() {
+      isGameOver = true;
+      clearInterval(pipeGenerator);
+      gameOverDialog.style.display = "block";
+      finalScoreEl.textContent = score;
+    }
+
+    function retryGame() {
+      gameStarted = false;
+      startGame();
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.code === "Space") flap();
+    });
+
+    document.addEventListener("click", flap);
+  </script>
+</body>
+</html>

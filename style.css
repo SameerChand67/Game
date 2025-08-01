@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Ludo Game</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f0f0f0;
+      text-align: center;
+    }
+    h1 {
+      margin-top: 20px;
+    }
+    #gameOptions {
+      margin: 20px;
+    }
+    #ludoBoard {
+      display: grid;
+      grid-template-columns: repeat(15, 30px);
+      grid-template-rows: repeat(15, 30px);
+      margin: 20px auto;
+      width: 450px;
+      height: 450px;
+      background: white;
+      border: 3px solid #333;
+    }
+    .cell {
+      width: 30px;
+      height: 30px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+    }
+    .home-red { background: #ff4d4d; }
+    .home-green { background: #4dff4d; }
+    .home-blue { background: #4da6ff; }
+    .home-yellow { background: #ffff66; }
+    .player-piece {
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Ludo Game</h1>
+  <div id="gameOptions">
+    <label for="playerCount">Choose Players:</label>
+    <select id="playerCount">
+      <option value="2">2 Players</option>
+      <option value="3">3 Players</option>
+      <option value="4">4 Players</option>
+      <option value="cpu">Play vs Computer</option>
+    </select>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+  <div id="ludoBoard"></div>
+  <div id="gameInfo"></div>
+
+  <script>
+    const board = document.getElementById("ludoBoard");
+
+    function createLudoBoard() {
+      board.innerHTML = "";
+      for (let i = 0; i < 225; i++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+
+        // Color zones (simplified)
+        if ((i >= 0 && i < 45)) cell.classList.add("home-red");
+        if ((i >= 180 && i < 225)) cell.classList.add("home-yellow");
+        if ((i % 15 < 3 && i >= 45 && i < 180)) cell.classList.add("home-green");
+        if ((i % 15 > 11 && i >= 45 && i < 180)) cell.classList.add("home-blue");
+
+        board.appendChild(cell);
+      }
+    }
+
+    function startGame() {
+      const selected = document.getElementById("playerCount").value;
+      document.getElementById("gameInfo").textContent =
+        selected === "cpu" ? "Playing against Computer (Coming soon!)" : `${selected} Player Game Started! (Basic layout)`;
+      createLudoBoard();
+    }
+
+    // Default render
+    createLudoBoard();
+  </script>
+</body>
+</html>
